@@ -10,7 +10,9 @@ from win10toast import ToastNotifier
 FONT = ("Cascadia Code", 11)
 pathDir = os.path.join('C:\\', 'Users', os.getlogin(), 'FireCamp Chat')
 pathFile = os.path.join('C:\\', 'Users', os.getlogin(), 'FireCamp Chat', "ipTemp.txt")
-# toast = ToastNotifier()
+toast = ToastNotifier()
+
+print("Créé par Zenith et Darkvox")
 
 # Thèmes
 THEMES = {
@@ -172,7 +174,7 @@ class ChatClient:
                 messagenotif = message.split(" :")
                 if(messagenotif[0] != self.pseudo):
                     print(message)
-                    # self.notif(message) # désactivé pour le moment car c chiant
+                    self.notif(message) # désactivé pour le moment car c chiant
                     
             except:
                 self.client_socket.close()
