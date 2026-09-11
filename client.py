@@ -1,16 +1,12 @@
-import socket
-import threading
+import socket, os, threading, hashlib
 import tkinter as tk
-import os
-from pathlib import Path
 from tkinter import simpledialog, scrolledtext, messagebox
-from win10toast import ToastNotifier
 
 # Configuration
 FONT = ("Cascadia Code", 11)
 pathDir = os.path.join('C:\\', 'Users', os.getlogin(), 'FireCamp Chat')
 pathFile = os.path.join('C:\\', 'Users', os.getlogin(), 'FireCamp Chat', "ipTemp.txt")
-toast = ToastNotifier()
+# toast = ToastNotifier() deprecated (from win10toast)
 
 print("Créé par Zenith et Darkvox")
 
@@ -33,8 +29,8 @@ THEMES = {
 }
 
 class ChatClient:
+    
     def __init__(self, master):
-        
         # check si le fichier existe, si non on le crée, si oui on le lis
         if not os.path.exists(pathDir):
             os.mkdir(pathDir)
@@ -55,9 +51,10 @@ class ChatClient:
             messagebox.showerror("Erreur", "IP requise !")
             master.destroy()
             return
+        
         self.PORT = simpledialog.askinteger("Port", "Entrez le port du serveur:", initialvalue=self.ip_temp_file_read(2), parent=self.master)
         if not self.PORT:
-            messagebox.showerror("Erreur", "IP requise !")
+            messagebox.showerror("Erreur", "Port requis !")
             master.destroy()
             return
 
@@ -93,6 +90,7 @@ class ChatClient:
 
         # Connexion socket
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         try:
             self.client_socket.connect((self.HOST, self.PORT))
         except Exception as e:
@@ -106,13 +104,14 @@ class ChatClient:
         threading.Thread(target=self.receive_messages, daemon=True).start()
         self.apply_theme()
 
-    def notif(self, message):
-        toast.show_toast(
-            "Notification",
-            message,
-            duration = 3,
-            threaded = True,
-        )
+    # def notif(self, message):
+    #     toast.show_toast(
+    #         "Notification",
+    #         message,
+    #         duration = 3,
+    #         threaded = True,
+    #     )
+    # deprecated
 
     def ip_temp_file_read(self, ip_or_port):
         try:
@@ -174,21 +173,20 @@ class ChatClient:
                 messagenotif = message.split(" :")
                 if(messagenotif[0] != self.pseudo):
                     print(message)
-                    self.notif(message) # désactivé pour le moment car c chiant
-                    
+                    # self.notif(message) # désactivé pour le moment car c chiant
             except:
                 self.client_socket.close()
                 break
 
     def send_message(self, event=None):
         message = self.message_entry.get()
+        
         if message:
             try:
                 self.client_socket.sendall(message.encode())
                 self.message_entry.delete(0, tk.END)
             except:
-                self.client_socket.close()
-                self.master.quit()
+                self.on_closing
 
     def display_message(self, message):
         self.chat_display.config(state='normal')
@@ -198,10 +196,13 @@ class ChatClient:
 
     def on_closing(self):
         self.running = False
+        
         try:
+            self.client_socket.sendto("/quit".encode(), (self.HOST, self.PORT))
             self.client_socket.close()
         except:
-            pass
+            print("error on closing")
+            
         self.master.destroy()
 
 # Lancement
