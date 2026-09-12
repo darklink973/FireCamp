@@ -198,7 +198,6 @@ class ChatClient:
         self.running = False
         
         try:
-            self.client_socket.sendto("/quit".encode(), (self.HOST, self.PORT))
             self.client_socket.close()
         except:
             print("error on closing")

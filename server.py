@@ -1,6 +1,6 @@
 import socket, threading, time
 
-running = True
+running = threading.Event()
 
 clients = []
 pseudos = {}
@@ -31,7 +31,7 @@ def handle_client(client_socket, addr):
                     try:
                         arg = message.decode().split(" ")
                         if(arg[1] == "create"):
-                            create_group(arg[2])
+                            create_group(arg[2], pseudo)
                         elif(arg[1] == "join"):
                             if(arg[2] in groups):
                                 send_to_username(pseudo, "[/] Connexion en cours...")
@@ -56,20 +56,19 @@ def handle_client(client_socket, addr):
                     # broadcast(f"[/]: {list(pseudos.values())}")
                     send_to_username(pseudo, f"[/] {search_names_in_groups(pseudo)}: " + str(groups[search_names_in_groups(pseudo)]))
                     print(adresses)
-                elif(message.decode() == "/quit"):
-                    groups[search_names_in_groups(pseudo)].remove(pseudo)
-                    del adresses[pseudo]
-                    del pseudos[client_socket]
-                    break
                 else:
                     send_to_group(search_names_in_groups(pseudo), message.decode(), pseudo)
             else:
                 break
         except:
             break
-    
+        
+    groups[search_names_in_groups(pseudo)].remove(pseudo)
+    del adresses[pseudo]
+    del pseudos[client_socket]
     client_socket.close()
-    clients.remove(client_socket)
+    if client_socket in clients:
+        clients.remove(client_socket)
     
     broadcast(f"[-] {pseudo} a quitté le chat.")
     print(f"[-] {pseudo} a quitté le chat. -- {time.asctime()}")
@@ -111,10 +110,12 @@ def get_unique_pseudo(client_socket, msg):
 def is_pseudo_taken(pseudo):
     return pseudo in pseudos.values()
 
-def create_group(nom):
+def create_group(nom, username):
     if not nom in groups:
         val = {nom: []}
         groups.update(val)
+        send_to_username(username, f"Groupe <{nom}> créé")
+    else:send_to_username(username, "Nom de groupe déjà attribué")
 
 def send_to_group(group, message, username):
     try:
@@ -168,14 +169,33 @@ def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('127.0.0.1', 9999))
     server.listen()
+    server.settimeout(1)
+    running.set()
     print("Serveur lancé sur 127.0.0.1:9999")
 
-    while running == True:
-        client_socket, addr = server.accept()
-        clients.append(client_socket)
-        threading.Thread(target=handle_client, args=(client_socket, addr), daemon=True).start()
-    if running == False:
-        server.
+    while running.is_set():
+        try:
+            client_socket, addr = server.accept()
+            clients.append(client_socket)
+            threading.Thread(
+                target=handle_client,
+                args=(client_socket, addr),
+                daemon=True
+            ).start()
+
+        except socket.timeout:
+            continue
+    print("Arrêt du serveur...")
+    
+    for client in clients:
+        try:
+            client.shutdown(socket.SHUT_RDWR)
+        except:
+            pass
+        client.close()
+    clients.clear()
+    server.close()
+    print("Serveur arrêté.")
 
 if __name__ == "__main__":
     while True:
@@ -197,5 +217,4 @@ if __name__ == "__main__":
                 print('Voici les commandes: \n -"start", \n -"list"') # A terminer pls
             case "stop":
                 broadcast("Serveur éteint.")
-                server.unbind()
-                running = False
+                running.clear()
