@@ -65,6 +65,10 @@ class ChatClient:
         # Zone d'affichage des messages
         self.chat_display = scrolledtext.ScrolledText(self.main_frame, wrap=tk.WORD, state='disabled', width=60, height=20, font=FONT)
         self.chat_display.grid(row=0, column=0, columnspan=3, sticky="nw")
+        
+        # Zone d'afficheage des groupes
+        #self.chat_display = scrolledtext.ScrolledText(self.main_frame, wrap=tk.WORD, state='disabled', width=60, height=20, font=FONT)
+        #self.chat_display.grid(row=0, column=0, columnspan=3, sticky="nw")
 
         # Entrée message
         self.message_entry = tk.Entry(self.main_frame, width=40, font=FONT)
@@ -88,19 +92,25 @@ class ChatClient:
         # Sauvegarde des identifiants
         self.ip_temp_file_write()
 
+        self.start_connection()
+        
+    def start_connection(self):
+        # Clear le screen
+        self.chat_display.config(state="normal")
+        self.chat_display.delete(1.0)
+        self.chat_display.config(state="disabled")
         # Connexion socket
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+        
         try:
             self.client_socket.connect((self.HOST, self.PORT))
         except Exception as e:
             messagebox.showerror("Erreur de connexion", str(e))
-            master.destroy()
+            self.master.destroy()
             return
-
         self.client_socket.sendall(self.pseudo.encode())
         self.running = True
-
+    
         threading.Thread(target=self.receive_messages, daemon=True).start()
         self.apply_theme()
 
@@ -170,14 +180,13 @@ class ChatClient:
             try:
                 message = self.client_socket.recv(1024).decode()
                 self.display_message(message)
-                messagenotif = message.split(" :")
-                if(messagenotif[0] != self.pseudo):
-                    print(message)
-                    # self.notif(message) # désactivé pour le moment car c chiant
-            except:
-                self.client_socket.close()
+                if not message:
+                    break
+            except ConnectionResetError:
+                self.running = False
                 break
-
+        self.display_message("Erreur de connexion au serveur")
+                
     def send_message(self, event=None):
         message = self.message_entry.get()
         
@@ -185,8 +194,8 @@ class ChatClient:
             try:
                 self.client_socket.sendall(message.encode())
                 self.message_entry.delete(0, tk.END)
-            except:
-                self.on_closing
+            except ConnectionAbortedError:
+                self.start_connection()
 
     def display_message(self, message):
         self.chat_display.config(state='normal')
@@ -194,7 +203,7 @@ class ChatClient:
         self.chat_display.yview(tk.END)
         self.chat_display.config(state='disabled')
 
-    def on_closing(self):
+    def on_expected_closing(self):
         self.running = False
         
         try:
@@ -208,6 +217,6 @@ class ChatClient:
 if __name__ == "__main__":
     root = tk.Tk()
     client = ChatClient(root)
-    root.protocol("WM_DELETE_WINDOW", client.on_closing)
+    root.protocol("WM_DELETE_WINDOW", client.on_expected_closing)
     root.mainloop()
 
