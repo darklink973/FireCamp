@@ -176,7 +176,7 @@ class ChatClient:
     def send_message(self, event=None):
         message = self.message_entry.get()
         if message:
-            content = "message"
+            content = ["message", message]
             if message[0] == "/":
                 content = ["command", message]
             data = json.dumps(content).encode("utf-8")

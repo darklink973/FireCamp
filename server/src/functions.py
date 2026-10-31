@@ -41,7 +41,7 @@ def create_group(nom, username):
     if not nom in groups:
         val = {nom: []}
         groups.update(val)
-        send_to_username(username, f"Groupe <{nom}> créé")
+        send_to_username(username, f"Groupe {nom} créé")
     else:send_to_username(username, "Nom de groupe déjà attribué")
 
 def send_to_group(group, message, username):

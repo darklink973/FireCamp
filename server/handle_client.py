@@ -1,6 +1,6 @@
-import server.src.functions as functions
-from server.src.variables import *
-import time, socket
+import src.functions as functions
+from src.variables import *
+import time, socket, json
 
 def handle_client(client_socket, addr):
     init_msg = client_socket.recv(1024).decode().split(", ")
@@ -16,15 +16,17 @@ def handle_client(client_socket, addr):
     groups["main_server"].append(pseudo)
     functions.broadcast(f"[+] {pseudo} a rejoint le chat.")
     print(f"[+] {pseudo} a rejoint le chat. -- {time.asctime()}")
-
     while True:
         try:
-            message = client_socket.recv(1024)
+            raw_data = client_socket.recv(1024)
+            if not raw_data:
+                break
+            message = json.loads(raw_data.decode("utf-8"))
+            arg = message[1].split(" ")
             
-            if message:
-                if(message.decode().startswith("/group")):
+            if message[0] == "command":
+                if(message[1].startswith("/group")):
                     try:
-                        arg = message.decode().split(" ")
                         if(arg[1] == "create"):
                             functions.create_group(arg[2], pseudo)
                         elif(arg[1] == "join"):
@@ -38,22 +40,19 @@ def handle_client(client_socket, addr):
                     except:
                         functions.send_to_username(pseudo, "[/] Ne pas utiliser d'espaces dans le nom du groupe merci !")
                         print("Erreur: /group")
-                elif(message.decode().startswith("/msg")):
+                elif(message[1].startswith("/msg")):
                     try:
-                        arg = message.decode().split(" ")
-                        Message = message.decode().replace("/msg " + arg[1], f"<de:{arg[1]}>:")
+                        Message = message[1].replace("/msg " + arg[1], f"<de:{arg[1]}>:")
                         functions.send_to_username(arg[1], Message)
                     except:
                         print("Erreur: /msg")
                         pass
-                elif(message.decode() == "/list"):
+                elif(message[1] == "/list"):
                     print(f"[/] {pseudo} à executé la commande /list: {str(groups[functions.search_names_in_groups(pseudo)])} -- {time.asctime()}")
                     functions.send_to_username(pseudo, f"[/] {functions.search_names_in_groups(pseudo)}: " + str(groups[functions.search_names_in_groups(pseudo)]))
                     print(adresses)
-                else:
-                    functions.send_to_group(functions.search_names_in_groups(pseudo), message.decode(), pseudo)
             else:
-                break
+                functions.send_to_group(functions.search_names_in_groups(pseudo), message[1], pseudo)
         except:
             break
         
