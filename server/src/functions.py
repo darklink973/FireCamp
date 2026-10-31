@@ -1,5 +1,5 @@
 from server.src.variables import *
-import socket
+
 def get_unique_pseudo(client_socket, msg):
     pseudo = msg[0]
     if not pseudo:
@@ -75,11 +75,11 @@ def search_names_in_groups(username):
 
 def send_to_username(username, message):
     ip_and_port = adresses[username]
-    # print(ip_and_port, adresses, clients, username)
+    # print(ip_and_port, adresses, clients, username) #debug
     try:
         for client in clients:
             if(client.getpeername() == ip_and_port):
-                # print(message, client)
+                # print(message, client) #debug
                 client.sendto(message.encode("utf-8"), (ip_and_port[0], ip_and_port[1]))
     except:
         print("Erreur fonction: send_to_username")

@@ -48,7 +48,6 @@ def handle_client(client_socket, addr):
                         pass
                 elif(message.decode() == "/list"):
                     print(f"[/] {pseudo} à executé la commande /list: {str(groups[functions.search_names_in_groups(pseudo)])} -- {time.asctime()}")
-                    # broadcast(f"[/]: {list(pseudos.values())}")
                     functions.send_to_username(pseudo, f"[/] {functions.search_names_in_groups(pseudo)}: " + str(groups[functions.search_names_in_groups(pseudo)]))
                     print(adresses)
                 else:
