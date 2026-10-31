@@ -37,6 +37,8 @@ def handle_client(client_socket, addr):
                                 functions.move_users_to_groups(pseudo, arg[2])
                             else:
                                 functions.send_to_username(pseudo, "[/] Nom du groupe invalide !")
+                        elif(arg[1] == "delete"):
+                            functions.delete_group(arg[2], pseudo)
                     except:
                         functions.send_to_username(pseudo, "[/] Ne pas utiliser d'espaces dans le nom du groupe merci !")
                         print("Erreur: /group")

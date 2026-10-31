@@ -1,56 +1,61 @@
 from src.variables import *
 
 def get_unique_pseudo(client_socket, msg):
-    pseudo = msg[0]
-    if not pseudo:
+    if not msg[0]:
         return None
-    if len(pseudo) <= 3:
+    if len(msg[0]) <= 3:
         client_socket.sendall(
             "Votre pseudo est trop court ! (min 3 caractères)".encode()
         )
         return None
-    if len(pseudo) >= 12:
+    if len(msg[0]) >= 12:
         client_socket.sendall(
             "Votre pseudo est trop long ! (max 12 caractères)".encode()
         )
         return None
-    if pseudo.startswith("/"):
+    if msg[0].startswith("/"):
         client_socket.sendall(
             "Votre pseudo ne peut pas commencer par '/'."
             .encode()
         )
         return None
-    if " " in pseudo:
+    if " " in msg[0]:
         client_socket.sendall(
             "Votre pseudo ne doit pas contenir d'espaces.\n"
             .encode()
         )
         return None
-    if is_pseudo_taken(pseudo):
+    if is_pseudo_taken(msg[0]):
         client_socket.sendall(
             "Ce pseudo est déjà utilisé. Veuillez en choisir un autre."
             .encode()
         )
         return None
-    return pseudo
+    return msg[0]
 
 def is_pseudo_taken(pseudo):
     return pseudo in pseudos.values()
 
 def create_group(nom, username):
     if not nom in groups:
-        val = {nom: []}
-        groups.update(val)
+        groups.update({nom: []})
         send_to_username(username, f"Groupe {nom} créé")
-    else:send_to_username(username, "Nom de groupe déjà attribué")
+    else:
+        send_to_username(username, "Nom de groupe déjà attribué")
+    
+def delete_group(nom, username):
+    if nom in groups:
+        groups.pop(nom)
+        send_to_username(username, f"Groupe {nom} supprimé")
+    else:
+        send_to_username(username, f"Le groupe {nom} n'existe pas")
 
 def send_to_group(group, message, username):
     try:
-        Message = f"<{username}>: {message}"
         for key, value in groups.items():
             for val in value:
                 if(key == group):
-                    send_to_username(val, Message)
+                    send_to_username(val, f"<{username}>: {message}")
     except:
         print("Erreur fonction: send_to_group")
         return
@@ -74,13 +79,10 @@ def search_names_in_groups(username):
         pass
 
 def send_to_username(username, message):
-    ip_and_port = adresses[username]
-    # print(ip_and_port, adresses, clients, username) #debug
     try:
         for client in clients:
-            if(client.getpeername() == ip_and_port):
-                # print(message, client) #debug
-                client.sendto(message.encode("utf-8"), (ip_and_port[0], ip_and_port[1]))
+            if(client.getpeername() == adresses[username]):
+                client.sendto(message.encode("utf-8"), (adresses[username][0], adresses[username][1]))
     except:
         print("Erreur fonction: send_to_username")
         return
