@@ -1,6 +1,6 @@
 import threading, time
-from server.src.functions import *
-from server.src.variables import *
+from src.functions import *
+from src.variables import *
 from handle_client import *
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from server.src.variables import *
+from src.variables import *
 
 def get_unique_pseudo(client_socket, msg):
     pseudo = msg[0]
