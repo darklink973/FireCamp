@@ -1,4 +1,4 @@
-import socket, os, threading, hashlib
+import socket, os, threading, json
 import tkinter as tk
 from tkinter import simpledialog, scrolledtext, messagebox
 
@@ -113,27 +113,13 @@ class ChatClient:
     
         threading.Thread(target=self.receive_messages, daemon=True).start()
         self.apply_theme()
-
-    # def notif(self, message):
-    #     toast.show_toast(
-    #         "Notification",
-    #         message,
-    #         duration = 3,
-    #         threaded = True,
-    #     )
-    # deprecated
-
+        
     def ip_temp_file_read(self, ip_or_port):
         try:
             with open(pathFile, "r") as file:
                 text = file.read()
                 ip = text.split(":")
-                if(ip_or_port == 0):
-                    return ip[0]
-                if(ip_or_port == 1):
-                    return ip[1]
-                if(ip_or_port == 2):
-                    return ip[2]
+                return ip[ip_or_port]
         except:
             open(pathFile, "x")
             with open(pathFile, "w") as file:
@@ -189,10 +175,13 @@ class ChatClient:
                 
     def send_message(self, event=None):
         message = self.message_entry.get()
-        
         if message:
+            content = "message"
+            if message[0] == "/":
+                content = ["command", message]
+            data = json.dumps(content).encode("utf-8")
             try:
-                self.client_socket.sendall(message.encode())
+                self.client_socket.sendall(data)
                 self.message_entry.delete(0, tk.END)
             except ConnectionAbortedError:
                 self.start_connection()
