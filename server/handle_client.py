@@ -1,6 +1,6 @@
 import src.functions as functions
 from src.variables import *
-import time, socket, json
+import time, socket, json, ssl, cryptography
 
 def handle_client(client_socket, addr):
     init_msg = client_socket.recv(1024).decode().split(", ")

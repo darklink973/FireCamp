@@ -1,4 +1,4 @@
-import socket, os, threading, json
+import socket, os, threading, json, ssl, cryptography
 import tkinter as tk
 from tkinter import simpledialog, scrolledtext, messagebox
 
