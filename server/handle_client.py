@@ -1,6 +1,10 @@
 import src.functions as functions
 from src.variables import *
-import time, socket, json, ssl, cryptography
+import time, socket, json, ssl, cryptography, os
+
+# Charger server.crt et server.key
+with open('certificates/server/server.crt', "r") as file: cert = file.read()
+with open('certificates/server/server.key', "r") as file: key = file.read()
 
 def handle_client(client_socket, addr):
     init_msg = client_socket.recv(1024).decode().split(", ")
@@ -68,34 +72,3 @@ def handle_client(client_socket, addr):
     functions.broadcast(f"[-] {pseudo} a quitté le chat.")
     print(f"[-] {pseudo} a quitté le chat. -- {time.asctime()}")
     
-def start_server():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('127.0.0.1', 9999))
-    server.listen()
-    server.settimeout(1)
-    running.set()
-    print("Serveur lancé sur 127.0.0.1:9999")
-
-    while running.is_set():
-        try:
-            client_socket, addr = server.accept()
-            clients.append(client_socket)
-            threading.Thread(
-                target=handle_client,
-                args=(client_socket, addr),
-                daemon=True
-            ).start()
-
-        except socket.timeout:
-            continue
-    print("Arrêt du serveur...")
-    
-    for client in clients:
-        try:
-            client.shutdown(socket.SHUT_RDWR)
-        except:
-            pass
-        client.close()
-    clients.clear()
-    server.close()
-    print("Serveur arrêté.")

@@ -6,7 +6,6 @@ from tkinter import simpledialog, scrolledtext, messagebox
 FONT = ("Cascadia Code", 11)
 pathDir = os.path.join('C:\\', 'Users', os.getlogin(), 'FireCamp Chat')
 pathFile = os.path.join('C:\\', 'Users', os.getlogin(), 'FireCamp Chat', "ipTemp.txt")
-# toast = ToastNotifier() deprecated (from win10toast)
 
 print("Créé par Zenith et Darkvox")
 
