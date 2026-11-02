@@ -7,3 +7,5 @@ server/src/__pycache__/variables.cpython-313.pyc
 *.key
 *.csr
 *.srl
+server/network/__pycache__/__init__.cpython-313.pyc
+server/network/__pycache__/tls_config.cpython-313.pyc

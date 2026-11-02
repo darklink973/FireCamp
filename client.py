@@ -1,6 +1,7 @@
 import socket, os, threading, json, ssl, cryptography
 import tkinter as tk
 from tkinter import simpledialog, scrolledtext, messagebox
+from server.network.tls_config import *
 
 # Configuration
 FONT = ("Cascadia Code", 11)
@@ -98,20 +99,34 @@ class ChatClient:
         self.chat_display.config(state="normal")
         self.chat_display.delete(1.0)
         self.chat_display.config(state="disabled")
-        # Connexion socket
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_tls_context = create_client_context()
         
+        # Création des sockets
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
+            # Connexion socket
             self.client_socket.connect((self.HOST, self.PORT))
         except Exception as e:
             messagebox.showerror("Erreur de connexion", str(e))
             self.master.destroy()
             return
-        self.client_socket.sendall(self.pseudo.encode())
-        self.running = True
-    
-        threading.Thread(target=self.receive_messages, daemon=True).start()
-        self.apply_theme()
+        print(type(self.client_tls_context))
+        self.tls_socket = ssl.SSLContext.wrap_socket(self.client_tls_context, self.client_socket, False, False, server_hostname="localhost")
+        try:
+            self.tls_socket.settimeout(10)
+            self.tls_socket.do_handshake()
+            print(type(self.tls_socket))
+            print(self.tls_socket.getpeercert())     
+            self.tls_socket.settimeout(500) # Timeout client
+            self.tls_socket.sendall(self.pseudo.encode())
+            self.running = True
+            threading.Thread(target=self.receive_messages, daemon=True).start()
+            self.apply_theme()
+                
+        except ssl.SSLError:
+            print("Erreur de handshake SSL")
+            self.tls_socket.close()
+            return
         
     def ip_temp_file_read(self, ip_or_port):
         try:
@@ -163,7 +178,7 @@ class ChatClient:
     def receive_messages(self):
         while self.running:
             try:
-                message = self.client_socket.recv(1024).decode()
+                message = self.tls_socket.recv(1024).decode()
                 self.display_message(message)
                 if not message:
                     break
@@ -180,7 +195,7 @@ class ChatClient:
                 content = ["command", message]
             data = json.dumps(content).encode("utf-8")
             try:
-                self.client_socket.sendall(data)
+                self.tls_socket.sendall(data)
                 self.message_entry.delete(0, tk.END)
             except ConnectionAbortedError:
                 self.start_connection()

@@ -1,10 +1,29 @@
 import src.functions as functions
 from src.variables import *
-import time, socket, json, ssl, cryptography, os
+import time, json, ssl, cryptography, socket
 
-# Charger server.crt et server.key
-with open('certificates/server/server.crt', "r") as file: cert = file.read()
-with open('certificates/server/server.key', "r") as file: key = file.read()
+def handle_tls_client(client_socket, addr, context):
+    try:
+        tls_socket = ssl.SSLContext.wrap_socket(context, client_socket, True, False)
+        tls_socket.settimeout(10)
+        tls_socket.do_handshake()
+        tls_socket.settimeout(500) # Timeout client
+        clients.append(tls_socket)
+        print(clients)
+        handle_client(tls_socket, addr)
+        
+    except ssl.SSLError:
+        print("Erreur de handshake SSL")
+        tls_socket.close()
+        return
+    except socket.timeout:
+        print("Timeout du socket")
+        tls_socket.close()
+        return
+    except OSError:
+        print("OSError")
+        tls_socket.close()
+        return
 
 def handle_client(client_socket, addr):
     init_msg = client_socket.recv(1024).decode().split(", ")

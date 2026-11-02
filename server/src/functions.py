@@ -82,10 +82,9 @@ def send_to_username(username, message):
     try:
         for client in clients:
             if(client.getpeername() == adresses[username]):
-                client.sendto(message.encode("utf-8"), (adresses[username][0], adresses[username][1]))
-    except:
-        print("Erreur fonction: send_to_username")
-        return
+                client.sendall(message.encode("utf-8"))
+    except Exception as e:
+        print(f"Erreur send_to_username : {type(e).__name__}: {e}")
 
 def broadcast(message):
     for client in clients:

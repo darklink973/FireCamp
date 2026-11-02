@@ -19,5 +19,5 @@ def create_client_context():
     client_context.maximum_version = ssl.TLSVersion.TLSv1_3
     client_context.check_hostname = True
     
-    client_context.load_verify_locations('certificates/ca/ca.crt')
+    client_context.load_verify_locations('server/certificates/ca/ca.crt')
     return client_context

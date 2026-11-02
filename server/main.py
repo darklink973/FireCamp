@@ -1,7 +1,8 @@
-import threading, time
+import threading, time, socket
 from src.functions import *
 from src.variables import *
 from handle_client import *
+from network.tls_config import *
 
 def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -9,15 +10,15 @@ def start_server():
     server.listen()
     server.settimeout(1)
     running.set()
+    server_context = create_server_context()
     print("Serveur lancé sur 127.0.0.1:9999")
 
     while running.is_set():
         try:
             client_socket, addr = server.accept()
-            clients.append(client_socket)
             threading.Thread(
-                target=handle_client,
-                args=(client_socket, addr),
+                target=handle_tls_client,
+                args=(client_socket, addr, server_context),
                 daemon=True
             ).start()
 
